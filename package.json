@@ -1,0 +1,27 @@
+{
+  "name": "trip-war-room",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Trip War Room - real-time collaborative group itinerary canvas, budget engine and AI travel concierge (MERN)",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "npm --workspace server run dev",
+    "dev:web": "npm --workspace web run dev",
+    "build": "npm --workspace web run build",
+    "start": "npm --workspace server run start",
+    "seed": "npm --workspace server run seed",
+    "train": "npm --workspace server run train",
+    "test": "npm --workspace server run test",
+    "loadtest": "npm --workspace server run loadtest"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

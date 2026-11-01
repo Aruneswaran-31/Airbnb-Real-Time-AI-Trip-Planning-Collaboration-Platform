@@ -1,0 +1,573 @@
+{
+  "info": {
+    "name": "Trip War Room API",
+    "description": "AI Trip War Room — REST collection. Run 'Auth / Login (leader)' first: it stores accessToken, refreshToken and userId in collection variables. 'Trips / Create trip' stores tripId; 'Items / Pin venue' stores itemId. Base URL defaults to http://localhost:4000.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "tripId", "value": "" },
+    { "key": "itemId", "value": "" },
+    { "key": "voteId", "value": "" },
+    { "key": "inviteCode", "value": "" },
+    { "key": "email", "value": "arun@demo.dev" },
+    { "key": "password", "value": "Demo1234!" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Liveness",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/healthz", "host": ["{{baseUrl}}"], "path": ["healthz"] } }
+        },
+        {
+          "name": "Readiness",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/readyz", "host": ["{{baseUrl}}"], "path": ["readyz"] } }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new.traveler@demo.dev\",\n  \"password\": \"Secret123!\",\n  \"displayName\": \"New Traveler\",\n  \"dietaryTags\": [\"vegetarian\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "register"] }
+          }
+        },
+        {
+          "name": "Login (leader)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.accessToken) {",
+                  "  pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "  pm.collectionVariables.set('userId', body.user.userId);",
+                  "  console.log('signed in as', body.user.email, body.user.globalRole);",
+                  "}",
+                  "pm.test('200 with tokens', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Login (viewer)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"leo@demo.dev\",\n  \"password\": \"Demo1234!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Refresh tokens",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "refresh"] }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "me"] }
+          }
+        },
+        {
+          "name": "Update my preferences",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"Arun\",\n  \"dietaryTags\": [\"vegetarian\", \"gluten-free\"],\n  \"preferences\": {\n    \"maxPerPersonBudgetCents\": 45000,\n    \"favoriteCategories\": [\"food\", \"activity\"]\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "me"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/logout", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trips",
+      "item": [
+        {
+          "name": "Create trip",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.tripId) {",
+                  "  pm.collectionVariables.set('tripId', body.tripId);",
+                  "  pm.collectionVariables.set('inviteCode', body.inviteCode);",
+                  "}",
+                  "pm.test('201 created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destination\": \"Lisbon\",\n  \"startDate\": \"2026-03-12\",\n  \"endDate\": \"2026-03-15\",\n  \"totalBudget\": 2400,\n  \"maxParticipants\": 6,\n  \"budgetMode\": \"even\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/trips", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips"] }
+          }
+        },
+        {
+          "name": "My trips",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips"] }
+          }
+        },
+        {
+          "name": "Join with invite code",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"inviteCode\": \"{{inviteCode}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/join", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "join"] }
+          }
+        },
+        {
+          "name": "Trip detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}"] }
+          }
+        },
+        {
+          "name": "Board snapshot",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/board", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "board"] }
+          }
+        },
+        {
+          "name": "Conflicts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/conflicts", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "conflicts"] }
+          }
+        },
+        {
+          "name": "Trip analytics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/analytics", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "analytics"] }
+          }
+        },
+        {
+          "name": "Room settings (leader)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"totalBudget\": 2600,\n  \"budgetMode\": \"weighted\",\n  \"roomLocked\": false\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}"] }
+          }
+        },
+        {
+          "name": "Rotate invite code (leader)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/invite", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "invite"] }
+          }
+        },
+        {
+          "name": "Chat history",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/chat?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "trips", "{{tripId}}", "chat"],
+              "query": [{ "key": "limit", "value": "50" }]
+            }
+          }
+        },
+        {
+          "name": "Complete trip (leader)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/complete", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "complete"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Items",
+      "item": [
+        {
+          "name": "Pin venue",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const item = body.item || (body.board && body.board.items && body.board.items.slice(-1)[0]);",
+                  "if (item && (item.itemId || item._id)) pm.collectionVariables.set('itemId', item.itemId || item._id);",
+                  "pm.test('201 pinned', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"venueId\": \"v_3392\",\n  \"dayIndex\": 0,\n  \"startTime\": \"19:30\",\n  \"endTime\": \"21:00\",\n  \"note\": \"group dinner\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/items", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "items"] }
+          }
+        },
+        {
+          "name": "Pin custom card",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Sunset at Miradouro\",\n  \"category\": \"activity\",\n  \"dayIndex\": 1,\n  \"startTime\": \"18:00\",\n  \"endTime\": \"19:00\",\n  \"pricePerPerson\": 0\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/items", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "items"] }
+          }
+        },
+        {
+          "name": "Move item (expectedVersion required)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dayIndex\": 1,\n  \"startTime\": \"20:00\",\n  \"endTime\": \"21:30\",\n  \"expectedVersion\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/items/{{itemId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "items", "{{itemId}}"] }
+          }
+        },
+        {
+          "name": "Lock item (leader)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/items/{{itemId}}/lock", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "items", "{{itemId}}", "lock"] }
+          }
+        },
+        {
+          "name": "Unlock item (leader)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/items/{{itemId}}/unlock", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "items", "{{itemId}}", "unlock"] }
+          }
+        },
+        {
+          "name": "Get item",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/items/{{itemId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "items", "{{itemId}}"] }
+          }
+        },
+        {
+          "name": "Remove item",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/items/{{itemId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "items", "{{itemId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Votes",
+      "item": [
+        {
+          "name": "Open vote",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.vote && body.vote.voteId) pm.collectionVariables.set('voteId', body.vote.voteId);",
+                  "pm.test('201 opened', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"candidateItemIds\": [\"<itemA>\", \"<itemB>\"],\n  \"closesInSeconds\": 120\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/votes", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "votes"] }
+          }
+        },
+        {
+          "name": "Cast ballot",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"candidateItemId\": \"<itemId>\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/votes/{{voteId}}/cast", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "votes", "{{voteId}}", "cast"] }
+          }
+        },
+        {
+          "name": "Resolve vote",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/votes/{{voteId}}/resolve", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "votes", "{{voteId}}", "resolve"] }
+          }
+        },
+        {
+          "name": "List votes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/votes", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "votes"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Concierge",
+      "item": [
+        {
+          "name": "Ask (constraint-bound)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Find a vegan dinner near the castle under $25 for 7:30pm\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/ai/ask", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "ai", "ask"] }
+          }
+        },
+        {
+          "name": "Ask (impossible)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"question\": \"vegan dinner under $5 at 3am\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/ai/ask", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "ai", "ask"] }
+          }
+        },
+        {
+          "name": "Active constraints",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/ai/constraints", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "ai", "constraints"] }
+          }
+        },
+        {
+          "name": "Concierge history",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/trips/{{tripId}}/ai/history", "host": ["{{baseUrl}}"], "path": ["api", "v1", "trips", "{{tripId}}", "ai", "history"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Venues & recommendations",
+      "item": [
+        {
+          "name": "Destinations",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/destinations", "host": ["{{baseUrl}}"], "path": ["api", "v1", "destinations"] }
+          }
+        },
+        {
+          "name": "Lisbon venues (vegan, under $30)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/destinations/lisbon/venues?dietaryTags=vegan&maxPrice=30",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "destinations", "lisbon", "venues"],
+              "query": [
+                { "key": "dietaryTags", "value": "vegan" },
+                { "key": "maxPrice", "value": "30" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "My recommendation rail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations?limit=8",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "recommendations"],
+              "query": [{ "key": "limit", "value": "8" }]
+            }
+          }
+        },
+        {
+          "name": "Recommendation feedback",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"venueId\": \"v_3393\",\n  \"liked\": true\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/recommendations/feedback", "host": ["{{baseUrl}}"], "path": ["api", "v1", "recommendations", "feedback"] }
+          }
+        },
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/dashboard", "host": ["{{baseUrl}}"], "path": ["api", "v1", "dashboard"] }
+          }
+        },
+        {
+          "name": "Dashboard analytics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/dashboard/analytics", "host": ["{{baseUrl}}"], "path": ["api", "v1", "dashboard", "analytics"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Dataset stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/admin/dataset-stats", "host": ["{{baseUrl}}"], "path": ["api", "v1", "admin", "dataset-stats"] }
+          }
+        },
+        {
+          "name": "Upload venues",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"venues\": [\n    {\n      \"venueId\": \"v_demo_01\",\n      \"destination\": \"Lisbon\",\n      \"name\": \"Test Kitchen\",\n      \"category\": \"food\",\n      \"pricePerPersonCents\": 2100,\n      \"dietaryTags\": [\"vegetarian\"],\n      \"hours\": { \"open\": \"12:00\", \"close\": \"22:00\" },\n      \"coordinates\": { \"lat\": 38.71, \"lng\": -9.14 },\n      \"rating\": 4.4,\n      \"description\": \"A demo venue uploaded through the admin dataset endpoint.\"\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/admin/venues", "host": ["{{baseUrl}}"], "path": ["api", "v1", "admin", "venues"] }
+          }
+        },
+        {
+          "name": "List venues (admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/venues?destinationSlug=lisbon&limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "venues"],
+              "query": [
+                { "key": "destinationSlug", "value": "lisbon" },
+                { "key": "limit", "value": "100" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

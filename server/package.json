@@ -1,0 +1,33 @@
+{
+  "name": "trip-war-room-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "seed": "node src/seed.js",
+    "train": "node scripts/train-recommender.js",
+    "loadtest": "node scripts/loadtest.js",
+    "simulate": "node scripts/simulate-travelers.js",
+    "test": "node ../node_modules/jest/bin/jest.js --config jest.config.js --runInBand"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "socket.io": "^4.8.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.1.4",
+    "socket.io-client": "^4.8.1",
+    "supertest": "^7.0.0"
+  }
+}

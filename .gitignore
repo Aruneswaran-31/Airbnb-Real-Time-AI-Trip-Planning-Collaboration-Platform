@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnp.*
+
+# Build output
+dist/
+build/
+web/dist/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local database + Mongo binary cache (zero-install dev fallback)
+server/.data/
+server/.cache/
+.data/
+
+# Generated recommender artifact is committed on purpose (see docs/ARCHITECTURE.md),
+# but its temp files are not:
+server/artifacts/*.tmp
+server/artifacts/*.log
+
+# Test / coverage output
+coverage/
+server/coverage/
+*.lcov
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Freebuff workspace metadata
+.freebuff/
